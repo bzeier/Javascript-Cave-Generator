@@ -21,6 +21,97 @@
         let floorsToWallConversion = 4;
         let wallsToFloorConversion = 3;
 
+        //Perlin noise
+        function Noise2D(x, y) {
+            let X = Math.floor(x) & 255;
+            let Y = Math.floor(y) & 255;
+
+            let xf = x - Math.floor(x);
+            let yf = y - Math.floor(y);
+
+            let topRight = new Vector2(xf - 1.0, yf - 1.0);
+            let topLeft = new Vector2(xf, yf - 1.0);
+            let bottomRight = new Vector2(xf - 1.0, yf);
+            let bottomLeft = new Vector2(xf, yf);
+
+            //Select a value ffrom the permutation array for each of the 4 corners
+            const valueTopRight = Permutation[Permutation[X + 1] + Y + 1];
+            const valueTopLeft = Permutation[Permutation[X] + Y + 1];
+            const valueBottomRight = Permutation[Permutation[X + 1] + Y];
+            const valueBottomLeft = Permutation[Permutation[X] + Y];
+
+            const dotTopRight = topRight.dot(GetConstantVector(valueTopRight));
+            const dotTopLeft = topLeft.dot(GetConstantVector(valueTopLeft));
+            const dotBottomRight = bottomRight.dot(GetConstantVector(valueBottomRight));
+            const dotBottomLeft = bottomLeft.dot(GetConstantVector(valueBottomLeft));
+
+            const u = Fade(xf);
+            const v = Fade(yf);
+
+            return Lerp(u,
+                Lerp(v, dotBottomLeft, dotTopLeft),
+                Lerp(v, dotBottomRight, dotTopRight)
+            );
+        }
+
+        function MakePermutation() {
+            let permutation = [];
+            for (let i = 0; i < 256; i++) {
+                permutation.push(i);
+            }
+
+            Shuffle(permutation);
+
+            for (let i = 0; i < 256; i++) {
+                permutation.push(permutation[i]);
+            }
+
+            return permutation;
+        }
+
+        let Permutation = MakePermutation();
+
+        function Shuffle(arrayToShuffle) {
+            for (let e = arrayToShuffle.length - 1; e > 0; e--) {
+                const index = Math.round(Math.random() * (e - 1));
+                const temp = arrayToShuffle[e];
+
+                arrayToShuffle[e] = arrayToShuffle[index];
+                arrayToShuffle[index] = temp;
+            }
+        }
+
+        function GetConstantVector(v) {
+            // v is the value from the permutation table
+            const h = v & 3;
+            if (h == 0)
+                return new Vector2(1.0, 1.0);
+            else if (h == 1)
+                return new Vector2(-1.0, 1.0);
+            else if (h == 2)
+                return new Vector2(-1.0, -1.0);
+            else
+                return new Vector2(1.0, -1.0);
+        }
+
+        function Fade(t) {
+            return ((6 * t - 15) * t + 10) * t * t * t;
+        }
+
+        function Lerp(t, a1, a2) {
+            return a1 + t * (a2 - a1);
+        }
+
+
+        function Vector2(x, y) {
+            this.x = x;
+            this.y = y;
+
+            this.dot = function (other) {
+                return this.x * other.x + this.y * other.y;
+            }
+        }
+
         function randomNumberBetween0and1() {
             return Math.random();
         };
@@ -78,11 +169,18 @@
 
 
 
+        ///////////////////////////////////////////////////////////////////
+
+
         FillMapRandom(mapArray, 0);
-        DoTransitionStep(mapArray);
-        DoTransitionStep(mapArray);
+        FillMapPerlin(mapArray,0);
+        //DoTransitionStep(mapArray);
+        //DoTransitionStep(mapArray);
         DrawMap();
         GenerateGrid();
+
+
+        /////////////////////////////////////////////////////////////////
 
         function GenerateGrid() {
             for (var x = 0; x < mapSize; x++) {
@@ -99,16 +197,24 @@
         }
         function DrawCell(value, posX, posY) {
 
+            if (value == -1) {
+                ctx.fillStyle = "blue";
+            }
+
             if (value == 0) {
-                ctx.fillStyle = "white";
+                ctx.fillStyle = "yellow";
             }
 
             if (value == 1) {
-                ctx.fillStyle = "grey";
+                ctx.fillStyle = "lime";
             }
 
             if (value == 2) {
-                ctx.fillStyle = "red";
+                ctx.fillStyle = "green";
+            }
+
+            if (value == 3) {
+                ctx.fillStyle = "grey";
             }
 
             ctx.beginPath();
@@ -129,6 +235,18 @@
             }
         }
 
+        function FillMapPerlin(map, value) {
+
+            for (var x = 0; x < mapSize; x++) {
+                map[x] = [];
+                for (var y = 0; y < mapSize; y++) {
+
+                    map[x][y] = Noise2D(x*0.08, y*0.08);
+
+                }
+            }
+        }
+
         function FillMapFlat(map, value) {
 
             for (var x = 0; x < mapSize; x++) {
@@ -144,7 +262,16 @@
         function DrawMap() {
             for (var x = 0; x < mapSize; x++) {
                 for (var y = 0; y < mapSize; y++) {
+                    console.log(mapArray[x][y]);
+                    mapArray[x][y] = mapArray[x][y] + 0.15;
+                    if(mapArray[x][y] < 0) mapArray[x][y] = -1;
+                    if(mapArray[x][y] > 0 && mapArray[x][y] < 0.2) mapArray[x][y] = 0;
+                    if(mapArray[x][y] > 0.2 && mapArray[x][y] < 0.5) mapArray[x][y] = 1;
+                    if(mapArray[x][y] > 0.3 && mapArray[x][y] < 0.7) mapArray[x][y] = 1;
+                    if(mapArray[x][y] > 0.7 && mapArray[x][y] < 0.9) mapArray[x][y] = 2;
+                    if(mapArray[x][y] > 1) mapArray[x][y] = 3;
                     DrawCell(mapArray[x][y], x, y);
+                    
                 }
             }
         }
