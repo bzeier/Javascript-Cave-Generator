@@ -43,7 +43,7 @@
                         wallCount += 1;
                         break;
                     }
-                    console.log("x: " + x + i + "y: " + y + j)
+                    //console.log("x: " + x + i + "y: " + y + j)
                     if (map[x + i][y + j] == 1) {
                         wallCount += 1;
                         //DrawCell(2, x + i, y + j);
@@ -63,11 +63,9 @@
             for (var x = 1; x < mapSize - 1; x++) {
                 for (var y = 1; y < mapSize - 1; y++) {
                     let mooreNeighborWallCount = CountWallMooreNeighborsFromGridCoordinate(map, x, y);
-                    console.log("x: " + x + "y: " + y + "  " + mooreNeighborWallCount);
 
                     if (map[x][y] == 1) {
                         NewMapArray[x][y] = (mooreNeighborWallCount < wallsToFloorConversion) ? 0 : 1;
-                        //console.log(mooreNeighborWallCount + " < " + wallsToFloorConversion);
                     } else {
                         NewMapArray[x][y] = (mooreNeighborWallCount > floorsToWallConversion) ? 1 : 0;
                     }
