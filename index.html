@@ -1,83 +1,162 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Page Title</title>
+    <title>Page Title</title>
 </head>
+
 <body>
 
-<h1>Javascript Cave Generator</h1>
-<canvas id="map" width="1000" height="1000"></canvas>
-<script>
-    const canvas = document.getElementById("map");
-    const ctx = canvas.getContext("2d");
-    const gridSize = 16;
-    let mapArray = [];
-    let mapSize = 100;
+    <h1>Javascript Cave Generator</h1>
+    <canvas id="map" width="1000" height="1000"></canvas>
+    <script>
+        const canvas = document.getElementById("map");
+        const ctx = canvas.getContext("2d");
+        const gridSize = 16;
+        let mapArray = [];
+        let mapSize = 100;
+
+        //Cellular Automaton
+        let chanceToBecomeWall = 0.45;
+        let floorsToWallConversion = 4;
+        let wallsToFloorConversion = 3;
+
+        function randomNumberBetween0and1() {
+            return Math.random();
+        };
+
+        function CountWallMooreNeighborsFromGridCoordinate(map, x, y) {
+            wallCount = 0;
+
+            for (var i = -1; i < 2; i++) {
+                for (var j = -1; j < 2; j++) {
+                    if (i == 0 && j == 0) {
+                        break;
+                    }
+
+                    if (x + i < 0 || x + i > mapSize) {
+                        wallCount += 1;
+                        break;
+                    }
+
+                    if (y + j < 0 || y + j > mapSize) {
+                        wallCount += 1;
+                        break;
+                    }
+                    console.log("x: " + x + i + "y: " + y + j)
+                    if (map[x + i][y + j] == 1) {
+                        wallCount += 1;
+                        //DrawCell(2, x + i, y + j);
+                    }
 
 
-    FillMap(0);
-    DrawMap();
-    GenerateGrid();
+                }
+            }
 
-    function GenerateGrid(){
-        for(var x=0;x<mapSize;x++){
-            for(var y=0;y<mapSize;y++){
-                ctx.beginPath();
-                ctx.moveTo(x*gridSize,y*gridSize);
-                ctx.lineTo(x+1*gridSize,y*gridSize);
-                ctx.moveTo(x*gridSize,y*gridSize);
-                ctx.lineTo(x*gridSize,y+1*gridSize);
-                ctx.strokeStyle = "black";
-                ctx.stroke();
+            return wallCount;
+        }
+
+        function DoTransitionStep(map) {
+            let NewMapArray = [];
+            FillMapFlat(NewMapArray, 0);
+
+            for (var x = 1; x < mapSize - 1; x++) {
+                for (var y = 1; y < mapSize - 1; y++) {
+                    let mooreNeighborWallCount = CountWallMooreNeighborsFromGridCoordinate(map, x, y);
+                    console.log("x: " + x + "y: " + y + "  " + mooreNeighborWallCount);
+
+                    if (map[x][y] == 1) {
+                        NewMapArray[x][y] = (mooreNeighborWallCount < wallsToFloorConversion) ? 0 : 1;
+                        //console.log(mooreNeighborWallCount + " < " + wallsToFloorConversion);
+                    } else {
+                        NewMapArray[x][y] = (mooreNeighborWallCount > floorsToWallConversion) ? 1 : 0;
+                    }
+
+                }
+            }
+
+            mapArray = NewMapArray;
+
+        }
+
+
+
+        FillMapRandom(mapArray, 0);
+        DoTransitionStep(mapArray);
+        DrawMap();
+        GenerateGrid();
+
+        function GenerateGrid() {
+            for (var x = 0; x < mapSize; x++) {
+                for (var y = 0; y < mapSize; y++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x * gridSize, y * gridSize);
+                    ctx.lineTo(x + 1 * gridSize, y * gridSize);
+                    ctx.moveTo(x * gridSize, y * gridSize);
+                    ctx.lineTo(x * gridSize, y + 1 * gridSize);
+                    ctx.strokeStyle = "black";
+                    ctx.stroke();
+                }
             }
         }
-    }
-    function DrawCell(value, posX, posY){
+        function DrawCell(value, posX, posY) {
 
-        if(value == 0){
-            ctx.fillStyle = "white";
+            if (value == 0) {
+                ctx.fillStyle = "white";
+            }
+
+            if (value == 1) {
+                ctx.fillStyle = "grey";
+            }
+
+            if (value == 2) {
+                ctx.fillStyle = "red";
+            }
+
+            ctx.beginPath();
+            ctx.rect(posX * gridSize, posY * gridSize, posX * gridSize + gridSize, posY * gridSize + gridSize);
+            ctx.fill();
+
         }
 
-        if(value == 1){
-            ctx.fillStyle = "grey";
-        }
+        function FillMapRandom(map, value) {
 
-        ctx.beginPath();
-        ctx.rect(posX*gridSize,posY*gridSize,posX*gridSize + gridSize,posY*gridSize + gridSize);
-        //console.log("value: " + value, "position: " + posX + ", " + posY);
-        ctx.fill();
-        
-    }
+            for (var x = 0; x < mapSize; x++) {
+                map[x] = [];
+                for (var y = 0; y < mapSize; y++) {
 
-    function FillMap(value){
-        for(var x=0;x<mapSize;x++)
-        {
-            mapArray[x] = [];
-            for(var y=0;y<mapSize;y++)
-            {
-                mapArray[x][y] = 1;
-                if(x == 15 && y ==15) mapArray[x][y] = 0;
-                //console.log("x:" + x + " y: "+ y + " map = " + mapArray[x][y]);
+                    map[x][y] = randomNumberBetween0and1() < chanceToBecomeWall ? 0 : 1;
+
+                }
             }
         }
-    }
 
-    function DrawMap(){
-        for(var x=0;x<mapSize;x++)
-        {
-            for(var y=0;y<mapSize;y++)
-            {
-                console.log("x:" + x + " y: "+ y + " map = " + mapArray[x][y]);
-                DrawCell(mapArray[x][y],x,y);
+        function FillMapFlat(map, value) {
+
+            for (var x = 0; x < mapSize; x++) {
+                map[x] = [];
+                for (var y = 0; y < mapSize; y++) {
+
+                    map[x][y] = 0;
+
+                }
             }
         }
-    }
-</script>
 
-<style>
-    canvas {
-      border: 1px solid black;
-    }
-  </style>
+        function DrawMap() {
+            for (var x = 0; x < mapSize; x++) {
+                for (var y = 0; y < mapSize; y++) {
+                    DrawCell(mapArray[x][y], x, y);
+                }
+            }
+        }
+    </script>
+
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
 </body>
+
 </html>
