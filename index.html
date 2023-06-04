@@ -12,12 +12,12 @@
     <script>
         const canvas = document.getElementById("map");
         const ctx = canvas.getContext("2d");
-        const gridSize = 16;
+        const gridSize = 8;
         let mapArray = [];
-        let mapSize = 100;
+        let mapSize = 140;
 
         //Cellular Automaton
-        let chanceToBecomeWall = 0.45;
+        let chanceToBecomeWall = 0.43;
         let floorsToWallConversion = 4;
         let wallsToFloorConversion = 3;
 
@@ -79,6 +79,7 @@
 
 
         FillMapRandom(mapArray, 0);
+        DoTransitionStep(mapArray);
         DoTransitionStep(mapArray);
         DrawMap();
         GenerateGrid();
